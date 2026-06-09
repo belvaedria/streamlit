@@ -32,9 +32,15 @@ def get_model_files():
     pkl_files = glob.glob(os.path.join(model_folder, "*.pkl"))
     return joblib_files + pkl_files
 
-# @st.cache_resource 
+@st.cache_resource
 def load_model(model_path):
-    return joblib.load(model_path)
+    model = joblib.load(model_path)
+    
+    # KUNCI UTAMA: Paksa model melupakan nama fitur pas fit time agar tidak pelit validasi
+    if hasattr(model, 'feature_names_in_'):
+        delattr(model, 'feature_names_in_')
+        
+    return model
 
 
 # --- 3. ANTARMUKA UTAMA WEB ---
@@ -142,13 +148,13 @@ if st.button("Hitung Estimasi Harga Sewa"):
         kolom_numerik = ['square_feet', 'bedrooms', 'bathrooms']
         input_scaled[kolom_numerik] = scaler.transform(input_scaled[kolom_numerik])
         
-        # 3. Pastikan urutan kolomnya pas sesuai file joblib
+        # 3. Amankan kembali urutan kolom sesaat sebelum diubah ke array
         input_scaled = input_scaled[ALL_FEATURES]
         
-        # 4. KUNCI RAHASIA: Paksa jadi array murni pakai (.values) agar lolos validasi string
+        # 4. Ubah menjadi array murni numpy
         input_array = input_scaled.values
         
-        # 5. Prediksi menggunakan array tersebut
+        # 5. Prediksi (sekarang model tidak akan protes karena memorinya sudah dihapus di atas)
         prediction = model.predict(input_array)[0]
         
         st.header("💰 Hasil Prediksi")
