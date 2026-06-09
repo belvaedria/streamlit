@@ -97,7 +97,7 @@ with col2:
     pets_pilihan = st.selectbox("Kebijakan Hewan Peliharaan:", ("Cats,Dogs", "Dogs", "None"))
 
 
-# --- 5. MENYUSUN DATA INPUT MENJADI KOLOM ASLI MODEL ---
+# --- 5. MENYUSUN DATA INPUT MENJADI KOLOM ASLI MODEL (VERSI FIX MURNI /) ---
 input_row = {fitur: 0 for fitur in ALL_FEATURES}
 
 input_row['square_feet'] = square_feet
@@ -105,10 +105,10 @@ input_row['bedrooms'] = bedrooms
 input_row['bathrooms'] = bathrooms
 input_row['has_photo'] = has_photo
 
-# Jalankan logika mapping baru menggunakan underscore '_' bukan slash '/'
+# Logika mapping yang BENAR, menggunakan tanda slash '/' sesuai file joblib kamu
 if category_pilihan != "Apartment":
-    # Mengubah 'Home' -> 'category_housing_rent_home'
-    key_cat = f"category_housing_rent_{category_pilihan.lower().replace(' ', '_')}"
+    # Mengubah 'Home' -> 'category_housing/rent/home'
+    key_cat = f"category_housing/rent/{category_pilihan.lower().replace(' ', '_')}"
     if key_cat in input_row:
         input_row[key_cat] = 1
 
@@ -124,7 +124,7 @@ key_pets = f"pets_allowed_{pets_pilihan}"
 if key_pets in input_row:
     input_row[key_pets] = 1
 
-# Ubah menjadi DataFrame dan kunci urutannya
+# Ubah menjadi DataFrame dan kunci urutan kolomnya berdasarkan ALL_FEATURES
 input_df = pd.DataFrame([input_row])
 input_df = input_df[ALL_FEATURES]
 
