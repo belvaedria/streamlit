@@ -1,61 +1,51 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import joblib
 import os
 import glob
 
 st.set_page_config(
-    page_title="Breast Cancer Prediction",
-    page_icon="🧬",
+    page_title="USA Apartment Rent Prediction",
+    page_icon="🏙️",
     layout="wide"
 )
 
-FEATURE_NAMES = [
-    "concave points_worst",
-    "perimeter_worst",
-    "concave points_mean",
-    "radius_worst",
-    "perimeter_mean",
-]
+# --- 1. MEMUAT FILE SCALER & DAFTAR KOLOM ASLI ---
+@st.cache_resource
+def load_preprocessing_files():
+    try:
+        scaler = joblib.load('robust_scaler.joblib')
+        all_features = joblib.load('kolom_fitur.joblib')
+        return scaler, all_features
+    except Exception as e:
+        st.error(f"Gagal memuat file preprocessing (scaler/kolom_fitur): {e}")
+        st.stop()
 
+scaler, ALL_FEATURES = load_preprocessing_files()
+
+
+# --- 2. FUNGSI OTOMATIS PEMBACA MODEL ---
 def get_model_files():
     model_folder = "model"
-
     joblib_files = glob.glob(os.path.join(model_folder, "*.joblib"))
     pkl_files = glob.glob(os.path.join(model_folder, "*.pkl"))
-
-    model_files = joblib_files + pkl_files
-    return model_files
-
+    return joblib_files + pkl_files
 
 @st.cache_resource
 def load_model(model_path):
-    model = joblib.load(model_path)
-    return model
+    return joblib.load(model_path)
 
 
-def predict_label(prediction):
-    """
-    Pada dataset breast cancer dari scikit-learn:
-    0 = malignant
-    1 = benign
-    """
-    if prediction == 0:
-        return "Malignant / Kanker"
-    elif prediction == 1:
-        return "Benign / Tidak Kanker"
-    else:
-        return str(prediction)
-
-
-st.title("🧬 Breast Cancer Prediction App")
+# --- 3. ANTARMUKA UTAMA WEB ---
+st.title("🏙️ Apartments in USA Price Prediction App")
 st.write(
-    "Aplikasi ini digunakan untuk memprediksi breast cancer "
-    "berdasarkan input fitur secara manual."
+    "Aplikasi ini digunakan untuk memprediksi estimasi harga sewa apartemen bulanan di USA "
+    "berdasarkan spesifikasi bangunan dan lokasi secara manual."
 )
 
+# --- PILIH MODEL ---
 st.header("Pilih Model")
-
 model_files = get_model_files()
 
 if len(model_files) == 0:
@@ -63,82 +53,104 @@ if len(model_files) == 0:
     st.stop()
 
 model_names = [os.path.basename(file) for file in model_files]
-
-selected_model_name = st.selectbox(
-    "Pilih model machine learning",
-    model_names
-)
-
+selected_model_name = st.selectbox("Pilih model machine learning untuk prediksi:", model_names)
 selected_model_path = model_files[model_names.index(selected_model_name)]
 
 try:
     model = load_model(selected_model_path)
-    st.success(f"Model yang digunakan: {selected_model_name}")
+    st.success(f"Model aktif: {selected_model_name}")
 except Exception as e:
     st.error(f"Model gagal dimuat: {e}")
     st.stop()
 
 
-st.header("Input Data Manual")
+# --- 4. FORM INPUT DATA MANUAL (USER-FRIENDLY) ---
+st.header("Input Spesifikasi Apartemen")
 
-input_data = {}
+col1, col2 = st.columns(2)
 
-col1, col2, col3 = st.columns(3)
+with col1:
+    st.subheader("📐 Spesifikasi Fisik")
+    square_feet = st.number_input("Luas Bangunan (Square Feet):", min_value=100, max_value=10000, value=800, step=10)
+    bedrooms = st.number_input("Jumlah Kamar Tidur (Bedrooms):", min_value=0.0, max_value=10.0, value=1.0, step=1.0)
+    bathrooms = st.number_input("Jumlah Kamar Mandi (Bathrooms):", min_value=1.0, max_value=10.0, value=1.0, step=0.5)
+    
+    has_photo_pilihan = st.radio("Apakah Iklan Memiliki Foto?", ("Ya", "Tidak"))
+    has_photo = 1 if has_photo_pilihan == "Ya" else 0
 
-for i, feature in enumerate(FEATURE_NAMES):
-    if i % 3 == 0:
-        with col1:
-            input_data[feature] = st.number_input(
-                label=feature,
-                value=0.0,
-                format="%.6f"
-            )
-    elif i % 3 == 1:
-        with col2:
-            input_data[feature] = st.number_input(
-                label=feature,
-                value=0.0,
-                format="%.6f"
-            )
-    else:
-        with col3:
-            input_data[feature] = st.number_input(
-                label=feature,
-                value=0.0,
-                format="%.6f"
-            )
+with col2:
+    st.subheader("📍 Kategori & Lokasi")
+    
+    # Ambil daftar opsi kategori, state, dan kota asli dari kolom dummy kamu
+    categories = ["Apartment", "Home", "Short Term"]
+    
+    states = sorted([col.replace('state_', '') for col in ALL_FEATURES if col.startswith('state_')])
+    # Tambahkan opsi default teratas jika mau
+    
+    cities = sorted([col.replace('cityname_', '') for col in ALL_FEATURES if col.startswith('cityname_')])
+    if 'Others' in cities:
+        cities.remove('Others')
+    cities.append('Others')
 
-input_df = pd.DataFrame([input_data])
-input_df = input_df[FEATURE_NAMES]
+    category_pilihan = st.selectbox("Tipe Kategori Properti:", categories)
+    state_pilihan = st.selectbox("Negara Bagian (State):", states)
+    city_pilihan = st.selectbox("Nama Kota (City Name):", cities)
 
-st.subheader("Data yang Dimasukkan")
+    pets_pilihan = st.selectbox("Kebijakan Hewan Peliharaan:", ("Cats,Dogs", "Dogs", "None (Tidak Boleh / Mengikuti Aturan Kucing)"))
+
+
+# --- 5. TRIK SULAP: MENYUSUN DATA INPUT MENJADI 91 KOLOM ---
+# Kita buat baris kosong yang isinya angka 0 semua sepanjang 91 kolom
+input_row = {fitur: 0 for fitur in ALL_FEATURES}
+
+# Isi nilai numerik dasar yang tidak di-One-Hot Encode
+input_row['square_feet'] = square_feet
+input_row['bedrooms'] = bedrooms
+input_row['bathrooms'] = bathrooms
+input_row['has_photo'] = has_photo
+
+# Jalankan logika One-Hot Encoding manual di latar belakang
+if category_pilihan != "Apartment": # Karena Apartment adalah kolom acuan yang di-drop saat drop_first=True
+    key_cat = f"category_housing/rent/{category_pilihan.lower().replace(' ', '_')}"
+    if key_cat in input_row:
+        input_row[key_cat] = 1
+
+key_state = f"state_{state_pilihan}"
+if key_state in input_row:
+    input_row[key_state] = 1
+
+key_city = f"cityname_{city_pilihan}"
+if key_city in input_row:
+    input_row[key_city] = 1
+
+key_pets = f"pets_allowed_{pets_pilihan}"
+if key_pets in input_row:
+    input_row[key_pets] = 1
+
+# Ubah menjadi DataFrame agar siap diproses
+input_df = pd.DataFrame([input_row])
+input_df = input_df[ALL_FEATURES] # Samakan urutan kolom persis dengan training
+
+
+# --- 6. PROSES PREDIKSI DAN PENAMPILAN HASIL SEWA ---
+st.subheader("Data Input Berhasil Dikonversi (Siap Kirim ke Model)")
 st.dataframe(input_df)
 
-if st.button("Prediksi"):
+if st.button("Hitung Estimasi Harga Sewa"):
     try:
-        prediction = model.predict(input_df)[0]
-        prediction_label = predict_label(prediction)
-
-        st.subheader("Hasil Prediksi")
-        st.success(f"Hasil prediksi menggunakan {selected_model_name}: {prediction_label}")
-
-        if hasattr(model, "predict_proba"):
-            proba = model.predict_proba(input_df)[0]
-
-            if hasattr(model, "classes_"):
-                class_names = [predict_label(cls) for cls in model.classes_]
-            else:
-                class_names = [f"Class {i}" for i in range(len(proba))]
-
-            proba_df = pd.DataFrame({
-                "Class": class_names,
-                "Probability": proba
-            })
-
-            st.subheader("Probabilitas Prediksi")
-            st.dataframe(proba_df)
-        else:
-            st.info("Model ini tidak memiliki fungsi `predict_proba`, jadi probabilitas tidak ditampilkan.")
-
+        # Duplikat data untuk dilakukan scaling agar tidak merusak data mentah di tampilan
+        input_scaled = input_df.copy()
+        
+        # Lakukan scaling hanya pada 3 kolom numerik yang memiliki outlier tinggi
+        kolom_numerik = ['square_feet', 'bedrooms', 'bathrooms']
+        input_scaled[kolom_numerik] = scaler.transform(input_scaled[kolom_numerik])
+        
+        # Prediksi nominal harganya
+        prediction = model.predict(input_scaled)[0]
+        
+        st.header("💰 Hasil Prediksi")
+        st.success(f"Estimasi Harga Sewa Properti: **${prediction:,.2f} / Bulan**")
+        st.info(f"Dihitung secara real-time menggunakan algoritma: {selected_model_name}")
+        
     except Exception as e:
-        st.error(f"Terjadi error saat prediksi: {e}")
+        st.error(f"Terjadi error saat memproses prediksi: {e}")
