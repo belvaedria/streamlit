@@ -58,13 +58,13 @@ selected_model_path = model_files[model_names.index(selected_model_name)]
 
 try:
     model = load_model(selected_model_path)
-    st.success(f"Model aktif: {selected_model_name}")
+    st.sidebar.success(f"Model aktif: {selected_model_name}")
 except Exception as e:
     st.error(f"Model gagal dimuat: {e}")
     st.stop()
 
 
-# --- 4. FORM INPUT DATA MANUAL (USER-FRIENDLY) ---
+# --- 4. FORM INPUT DATA MANUAL ---
 st.header("Input Spesifikasi Apartemen")
 
 col1, col2 = st.columns(2)
@@ -81,12 +81,9 @@ with col1:
 with col2:
     st.subheader("📍 Kategori & Lokasi")
     
-    # Ambil daftar opsi kategori, state, dan kota asli dari kolom dummy kamu
     categories = ["Apartment", "Home", "Short Term"]
     
     states = sorted([col.replace('state_', '') for col in ALL_FEATURES if col.startswith('state_')])
-    # Tambahkan opsi default teratas jika mau
-    
     cities = sorted([col.replace('cityname_', '') for col in ALL_FEATURES if col.startswith('cityname_')])
     if 'Others' in cities:
         cities.remove('Others')
@@ -96,21 +93,20 @@ with col2:
     state_pilihan = st.selectbox("Negara Bagian (State):", states)
     city_pilihan = st.selectbox("Nama Kota (City Name):", cities)
 
-    pets_pilihan = st.selectbox("Kebijakan Hewan Peliharaan:", ("Cats,Dogs", "Dogs", "None (Tidak Boleh / Mengikuti Aturan Kucing)"))
+    # Disederhanakan value pilihan dropdown-nya agar teksnya singkron saat dicari kuncinya
+    pets_pilihan = st.selectbox("Kebijakan Hewan Peliharaan:", ("Cats,Dogs", "Dogs", "None"))
 
 
-# --- 5. TRIK SULAP: MENYUSUN DATA INPUT MENJADI 91 KOLOM ---
-# Kita buat baris kosong yang isinya angka 0 semua sepanjang 91 kolom
+# --- 5. MENYUSUN DATA INPUT MENJADI KOLOM ASLI MODEL ---
 input_row = {fitur: 0 for fitur in ALL_FEATURES}
 
-# Isi nilai numerik dasar yang tidak di-One-Hot Encode
 input_row['square_feet'] = square_feet
 input_row['bedrooms'] = bedrooms
 input_row['bathrooms'] = bathrooms
 input_row['has_photo'] = has_photo
 
-# Jalankan logika One-Hot Encoding manual di latar belakang
-if category_pilihan != "Apartment": # Karena Apartment adalah kolom acuan yang di-drop saat drop_first=True
+# Pemetaan One-Hot Encoding Manual yang presisi dengan dataset kamu
+if category_pilihan != "Apartment":
     key_cat = f"category_housing/rent/{category_pilihan.lower().replace(' ', '_')}"
     if key_cat in input_row:
         input_row[key_cat] = 1
@@ -127,9 +123,9 @@ key_pets = f"pets_allowed_{pets_pilihan}"
 if key_pets in input_row:
     input_row[key_pets] = 1
 
-# Ubah menjadi DataFrame agar siap diproses
+# Ubah menjadi DataFrame dan kunci urutan kolomnya langsung di sini!
 input_df = pd.DataFrame([input_row])
-input_df = input_df[ALL_FEATURES] # Samakan urutan kolom persis dengan training
+input_df = input_df[ALL_FEATURES]
 
 
 # --- 6. PROSES PREDIKSI DAN PENAMPILAN HASIL SEWA ---
@@ -145,7 +141,7 @@ if st.button("Hitung Estimasi Harga Sewa"):
         kolom_numerik = ['square_feet', 'bedrooms', 'bathrooms']
         input_scaled[kolom_numerik] = scaler.transform(input_scaled[kolom_numerik])
         
-        # 3. KUNCI RAHASIANYA: Paksa urutan kolom agar SAMA PERSIS dengan ALL_FEATURES sebelum diprediksi!
+        # 3. Amankan kembali urutan kolom sesaat sebelum predict
         input_scaled = input_scaled[ALL_FEATURES]
         
         # 4. Prediksi nominal harganya
