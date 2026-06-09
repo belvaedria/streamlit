@@ -58,7 +58,7 @@ selected_model_path = model_files[model_names.index(selected_model_name)]
 
 try:
     model = load_model(selected_model_path)
-    st.sidebar.success(f"Model aktif: {selected_model_name}")
+    st.success(f"Model aktif: {selected_model_name}")
 except Exception as e:
     st.error(f"Model gagal dimuat: {e}")
     st.stop()
@@ -105,9 +105,10 @@ input_row['bedrooms'] = bedrooms
 input_row['bathrooms'] = bathrooms
 input_row['has_photo'] = has_photo
 
-# Pemetaan One-Hot Encoding Manual yang presisi dengan dataset kamu
+# Jalankan logika mapping baru menggunakan underscore '_' bukan slash '/'
 if category_pilihan != "Apartment":
-    key_cat = f"category_housing/rent/{category_pilihan.lower().replace(' ', '_')}"
+    # Mengubah 'Home' -> 'category_housing_rent_home'
+    key_cat = f"category_housing_rent_{category_pilihan.lower().replace(' ', '_')}"
     if key_cat in input_row:
         input_row[key_cat] = 1
 
@@ -123,7 +124,7 @@ key_pets = f"pets_allowed_{pets_pilihan}"
 if key_pets in input_row:
     input_row[key_pets] = 1
 
-# Ubah menjadi DataFrame dan kunci urutan kolomnya langsung di sini!
+# Ubah menjadi DataFrame dan kunci urutannya
 input_df = pd.DataFrame([input_row])
 input_df = input_df[ALL_FEATURES]
 
