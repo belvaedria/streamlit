@@ -142,11 +142,14 @@ if st.button("Hitung Estimasi Harga Sewa"):
         kolom_numerik = ['square_feet', 'bedrooms', 'bathrooms']
         input_scaled[kolom_numerik] = scaler.transform(input_scaled[kolom_numerik])
         
-        # 3. Amankan kembali urutan kolom sesaat sebelum predict
+        # 3. Pastikan urutan kolomnya pas sesuai file joblib
         input_scaled = input_scaled[ALL_FEATURES]
         
-        # 4. Prediksi nominal harganya
-        prediction = model.predict(input_scaled)[0]
+        # 4. KUNCI RAHASIA: Paksa jadi array murni pakai (.values) agar lolos validasi string
+        input_array = input_scaled.values
+        
+        # 5. Prediksi menggunakan array tersebut
+        prediction = model.predict(input_array)[0]
         
         st.header("💰 Hasil Prediksi")
         st.success(f"Estimasi Harga Sewa Properti: **${prediction:,.2f} / Bulan**")
