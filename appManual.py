@@ -133,19 +133,22 @@ input_df = input_df[ALL_FEATURES] # Samakan urutan kolom persis dengan training
 
 
 # --- 6. PROSES PREDIKSI DAN PENAMPILAN HASIL SEWA ---
-st.subheader("Data Input Berhasil Dikonversi (Siap Kirim ke Model)")
+st.subheader("Data Input")
 st.dataframe(input_df)
 
 if st.button("Hitung Estimasi Harga Sewa"):
     try:
-        # Duplikat data untuk dilakukan scaling agar tidak merusak data mentah di tampilan
+        # 1. Duplikat data input mentah
         input_scaled = input_df.copy()
         
-        # Lakukan scaling hanya pada 3 kolom numerik yang memiliki outlier tinggi
+        # 2. Lakukan scaling pada kolom numerik
         kolom_numerik = ['square_feet', 'bedrooms', 'bathrooms']
         input_scaled[kolom_numerik] = scaler.transform(input_scaled[kolom_numerik])
         
-        # Prediksi nominal harganya
+        # 3. KUNCI RAHASIANYA: Paksa urutan kolom agar SAMA PERSIS dengan ALL_FEATURES sebelum diprediksi!
+        input_scaled = input_scaled[ALL_FEATURES]
+        
+        # 4. Prediksi nominal harganya
         prediction = model.predict(input_scaled)[0]
         
         st.header("💰 Hasil Prediksi")
