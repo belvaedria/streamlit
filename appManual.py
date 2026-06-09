@@ -32,7 +32,7 @@ def get_model_files():
     pkl_files = glob.glob(os.path.join(model_folder, "*.pkl"))
     return joblib_files + pkl_files
 
-@st.cache_resource
+# @st.cache_resource 
 def load_model(model_path):
     return joblib.load(model_path)
 
