@@ -157,16 +157,6 @@ if st.button("Hitung Estimasi Harga Sewa"):
         # 4. Ubah menjadi array murni numpy
         input_array = input_scaled.values
 
-        # DEBUG
-        st.write("TYPE INPUT:", type(input_array))
-        st.write("SHAPE INPUT:", input_array.shape)
-
-        if hasattr(model, "feature_names_in_"):
-            st.write("MODEL MASIH PUNYA feature_names_in_")
-            st.write("JUMLAH FITUR MODEL:", len(model.feature_names_in_))
-        else:
-            st.write("MODEL TIDAK PUNYA feature_names_in_")
-
         # 5. Prediksi
         prediction = model.predict(input_array)[0]
         
