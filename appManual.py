@@ -15,7 +15,7 @@ st.markdown("""
             rgba(255,255,255,0.50),
             rgba(255,255,255,0.50)
         ),
-        url("https://raw.githubusercontent.com/belvaedria/streamlit/main/assets/apartment_bg.webp");
+        url("https://raw.githubusercontent.com/belvaedria/streamlit/main/assets/apartment_bg.jpg");
         
     background-repeat: repeat-y;
     background-position: center top;
