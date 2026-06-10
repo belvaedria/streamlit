@@ -12,8 +12,8 @@ st.markdown("""
 .stApp {
     background-image:
         linear-gradient(
-            rgba(255,255,255,0.95),
-            rgba(255,255,255,0.95)
+            rgba(255,255,255,0.50),
+            rgba(255,255,255,0.50)
         ),
         url("https://raw.githubusercontent.com/belvaedria/streamlit/main/assets/apartment_bg.jpg");
         
