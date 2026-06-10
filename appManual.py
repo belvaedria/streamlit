@@ -4,6 +4,9 @@ import numpy as np
 import joblib
 import os
 import glob
+import streamlit as st
+
+st.cache_resource.clear()
 
 st.set_page_config(
     page_title="USA Apartment Rent Prediction",
@@ -153,8 +156,18 @@ if st.button("Hitung Estimasi Harga Sewa"):
         
         # 4. Ubah menjadi array murni numpy
         input_array = input_scaled.values
-        
-        # 5. Prediksi (sekarang model tidak akan protes karena memorinya sudah dihapus di atas)
+
+        # DEBUG
+        st.write("TYPE INPUT:", type(input_array))
+        st.write("SHAPE INPUT:", input_array.shape)
+
+        if hasattr(model, "feature_names_in_"):
+            st.write("MODEL MASIH PUNYA feature_names_in_")
+            st.write("JUMLAH FITUR MODEL:", len(model.feature_names_in_))
+        else:
+            st.write("MODEL TIDAK PUNYA feature_names_in_")
+
+        # 5. Prediksi
         prediction = model.predict(input_array)[0]
         
         st.header("💰 Hasil Prediksi")
