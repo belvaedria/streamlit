@@ -12,14 +12,13 @@ st.markdown("""
 .stApp {
     background-image:
         linear-gradient(
-            rgba(255,255,255,0.80),
-            rgba(255,255,255,0.80)
+            rgba(255,255,255,0.50),
+            rgba(255,255,255,0.50)
         ),
         url("https://raw.githubusercontent.com/belvaedria/streamlit/main/assets/apartment_bg.webp");
         
     background-repeat: repeat-y;
     background-position: center top;
-    background-size: 100% auto;
 }
 
 </style>
