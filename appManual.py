@@ -6,6 +6,25 @@ import os
 import glob
 import streamlit as st
 
+st.markdown("""
+<style>
+
+.stApp {
+    background-image:
+        linear-gradient(
+            rgba(255,255,255,0.80),
+            rgba(255,255,255,0.80)
+        ),
+        url("https://raw.githubusercontent.com/belvaedria/streamlit/main/assets/apartment_bg.webp");
+        
+    background-repeat: repeat-y;
+    background-position: center top;
+    background-size: 100% auto;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 st.cache_resource.clear()
 
 st.set_page_config(
