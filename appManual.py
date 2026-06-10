@@ -19,6 +19,7 @@ st.markdown("""
         
     background-repeat: repeat-y;
     background-position: center top;
+    background-size: auto;
 }
 
 </style>
